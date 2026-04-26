@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>FREEDOM CONTROL v1</title>
+<style>
+body{
+  font-family:sans-serif;
+  background:#111;
+  color:#0f0;
+  text-align:center;
+  padding:40px;
+}
+button{
+  padding:15px;
+  margin:10px;
+  font-size:16px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>FREEDOM CONTROL</h1>
+
+<button onclick="start()">START</button>
+<button onclick="stop()">STOP</button>
+
+<pre id="log"></pre>
+
+<script>
+
+async function start(){
+  await fetch('/start');
+  log("STARTED");
+}
+
+async function stop(){
+  await fetch('/stop');
+  log("STOPPED");
+}
+
+function log(t){
+  document.getElementById('log').innerText += t + "\n";
+}
+
+</script>
+
+</body>
+</html>
