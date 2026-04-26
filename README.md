@@ -1,0 +1,208 @@
+run these commands if on new computer after you have copied and extracted the files:
+
+cd into yt_headless_master directory
+
+npm init -y (enter button for all questions)
+npm i
+npm i express
+
+pkg install nodejs
+pkg install yt-dlp
+pkg install ffmpeg
+
+Install Node runtime support for yt-dlp:
+
+yt-dlp --js-runtimes node
+
+then do this... even if  above command fails.
+
+yt-dlp --js-runtimes node --extractor-args "youtube:player_client=web"
+
+make it permanent:
+
+mkdir -p ~/.config/yt-dlp
+nano ~/.config/yt-dlp/config
+
+Add: (add lines below into nano terminal the software ESC button twice bottom left of screen the ctrl + X key save)
+
+--js-runtimes node
+--extractor-args youtube:player_client=web
+
+
+
+full script again:
+
+// app.js
+const { spawn } = require('child_process');
+
+//////////////////////////////
+// CONFIG
+//////////////////////////////
+
+const searchPlaylistName = [
+  "worship music playlist",
+  "lofi hip hop",
+  "deep house mix"
+];
+
+const SearchForPlaylists = 5;
+
+// auto = number of search terms
+let CONCURRENCY = null;
+
+const Forever = true;
+const Shuffle = true;
+
+//////////////////////////////
+
+function sleep(ms){
+  return new Promise(r=>setTimeout(r,ms));
+}
+
+function shuffleArray(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+//////////////////////////////
+// SEARCH
+//////////////////////////////
+
+function searchVideos(query, count){
+  return new Promise((resolve)=>{
+    const cmd = spawn("yt-dlp", [
+      "--flat-playlist",
+      "-J",
+      `ytsearch${count}:${query}`,
+      "--js-runtimes",
+      "node"
+    ]);
+
+    let data = "";
+
+    cmd.stdout.on("data", chunk => data += chunk.toString());
+
+    cmd.on("close", () => {
+      try{
+        const json = JSON.parse(data);
+        if(!json.entries) return resolve([]);
+        resolve(json.entries.map(v => v.url));
+      }catch{
+        resolve([]);
+      }
+    });
+  });
+}
+
+//////////////////////////////
+// DOWNLOAD WITH LIVE STATS
+//////////////////////////////
+
+function downloadTrack(url, workerId){
+  return new Promise((resolve)=>{
+
+    console.log(`\n🧵 Worker ${workerId} START`);
+    console.log(`🎵 ${url}\n`);
+
+    const yt = spawn("yt-dlp", [
+      "-x",
+      "--audio-format", "mp3",
+      "--newline",                 // 🔥 forces line-by-line progress
+      "--js-runtimes", "node",
+      url
+    ]);
+
+    yt.stdout.on("data", (data)=>{
+      const lines = data.toString().split("\n");
+
+      lines.forEach(line=>{
+        if(line.includes("[download]")){
+          console.log(`🧵${workerId} ${line}`);
+        }
+        else if(line.includes("[ExtractAudio]")){
+          console.log(`🧵${workerId} 🎧 Converting...`);
+        }
+      });
+    });
+
+    yt.stderr.on("data", (data)=>{
+      const msg = data.toString().trim();
+      if(msg) console.log(`🧵${workerId} ⚠️ ${msg}`);
+    });
+
+    yt.on("close", ()=>{
+      console.log(`🧵 Worker ${workerId} DONE\n`);
+      resolve();
+    });
+
+  });
+}
+
+//////////////////////////////
+// WORKER POOL
+//////////////////////////////
+
+async function runPool(videos){
+
+  let index = 0;
+
+  async function worker(id){
+    while(index < videos.length){
+
+      const currentIndex = index++;
+      const url = videos[currentIndex];
+
+      await downloadTrack(url, id);
+
+      await sleep(1000);
+    }
+  }
+
+  const workers = [];
+
+  for(let i=0;i<CONCURRENCY;i++){
+    workers.push(worker(i+1));
+  }
+
+  await Promise.all(workers);
+}
+
+//////////////////////////////
+// MAIN
+//////////////////////////////
+
+async function run(){
+
+  let allVideos = [];
+
+  for(const q of searchPlaylistName){
+    const vids = await searchVideos(q, SearchForPlaylists);
+    allVideos.push(...vids);
+  }
+
+  console.log("🎧 TOTAL VIDEOS:", allVideos.length);
+
+  if(!CONCURRENCY){
+    CONCURRENCY = searchPlaylistName.length;
+  }
+
+  console.log("⚡ CONCURRENCY:", CONCURRENCY);
+
+  do{
+
+    let list = [...allVideos];
+
+    if(Shuffle){
+      list = shuffleArray(list);
+    }
+
+    await runPool(list);
+
+  }while(Forever);
+
+}
+
+run();
