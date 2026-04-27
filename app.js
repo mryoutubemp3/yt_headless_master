@@ -1,4 +1,3 @@
-// app.js
 const { spawn } = require('child_process');
 
 //////////////////////////////
@@ -6,15 +5,27 @@ const { spawn } = require('child_process');
 //////////////////////////////
 
 const searchPlaylistName = [
-  "worship music playlist",
-  "lofi hip hop",
-  "deep house mix"
-];
+  "Christian Music Playlist Vol R&B Mix",
+  "gospel music playlist",
+  "https://youtu.be/VlC15QhM_f4?si=SwDprQtFEfb24ouP",
+  "https://youtu.be/0GdH_CTA7EQ?si=OZBNEiqZbyDXdisu",
+  "gospel music playlist",
+  "https://youtube.com/playlist?list=PLYdnKAdxYwEW3XAPcDs9HAup07bfXIcys&si=RQxLZDtlpFugjmSH",
+  "gospel worship playlist"
 
-const SearchForPlaylists = 5;
+/*  "worship music playlist",
+  "songs of worship mix",
+  "songs of praise playlist",
+  "worship greatest hits playlist",
+  "worship playlist"
+*/
+  ];
 
-// auto = number of search terms
-let CONCURRENCY = null;
+
+const SearchForPlaylists = 100;
+
+// null = number of search terms
+let CONCURRENCY = 10;
 
 const Forever = true;
 const Shuffle = true;
