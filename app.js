@@ -21,10 +21,16 @@ const searchPlaylistName = [
 */
   ];
 
-
+// determins how many playlists
+// you want to find and convert/download,
+// based on searchPlaylistName
 const SearchForPlaylists = 100;
 
-// null = number of search terms
+// how many worker nodes do you want?
+// more workers = more faster downloads BUT 
+// higher value must have hi end machine.
+// cheap Tablet can do about 16-20,good value i
+// use is 10.
 let CONCURRENCY = 10;
 
 const Forever = true;
